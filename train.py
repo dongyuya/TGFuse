@@ -61,38 +61,6 @@ def train(i, original_imgs_path):
 
     if args.trans_model_path is not None:
         pre_dict = torch.load(args.trans_model_path)['state_dict']
-        # dis_dict1 = dis1.state_dict()
-        # pretrained_dict1 = {k:v for k,v in pre_dict.items() if k in dis_dict1.keys()}
-        # dis_dict1.update(pretrained_dict1)
-        # dis1.load_state_dict(dis_dict1)
-
-        # dis_dict2 = dis2.state_dict()
-        # pretrained_dict2 = {k: v for k, v in pre_dict.items() if k in dis_dict2.keys()}
-        # dis_dict2.update(pretrained_dict2)
-        # dis2.load_state_dict(dis_dict2)
-        # for (k, v), p in zip(dis_dict.items(), dis.parameters()):
-        #     if k in pretrained_dict.keys():
-        #         p.requires_grad = False
-
-    # pre_model_dict = pre_model.state_dict()
-    # pre_pre_dic = {k:v for k,v in pre_dict.items() if k in pre_model_dict.keys()}
-    # pre_model_dict.update(pre_pre_dic)
-    # pre_model.load_state_dict(pre_model_dict)
-
-    # encoder_dict = {}
-    # for k, v in pre_dict.items():
-    #     k_n = k
-    #     k_n = k_n.replace('tokens', 'en.tokens')
-    #     encoder_dict[k_n] = v
-    # pre_en_dict = {k: v for k, v in encoder_dict.items() if k in model_dict.keys()}
-    # model_dict.update(pre_en_dict)
-    # model.load_state_dict(model_dict)
-
-
-    # device_ids = [0, 1]  # 必须从零开始(这里0表示第1块卡，1表示第2块卡.)
-    # densefuse_model = nn.DataParallel(densefuse_model, device_ids=device_ids)
-    # densefuse_model.to(device)
-
 
     if args.resume is not None:
         print('Resuming, initializing using weight from {}.'.format(args.resume))
@@ -180,7 +148,7 @@ def train(i, original_imgs_path):
             optimizer_D1 = Adam(dis1.parameters(), args.lr_d)
             optimizer_D1.zero_grad()
 
-            optimizer_D2 = Adam(filter(lambda p: p.requires_grad, dis2.parameters()), args.lr_d)
+            optimizer_D2 = Adam(dis2.parameters(), args.lr_d)
             optimizer_D2.zero_grad()
 
 
@@ -217,37 +185,9 @@ def train(i, original_imgs_path):
 #-------------------------------------------------------------------------------------------------------------------
             vgg_out = dis1(outputs.detach())[0]
             vgg_vi = dis1(img_vi)[0]
-            # vi_t = img_vi[:, :, :224, :224]
-            # out_t = outputs[:, :, :224, :224]
-            # f_vi = dis2(out_t.detach()).squeeze(-1)
-            # r_vi = dis2(vi_t).squeeze(-1)
-            # real_label = torch.ones_like(r_vi)
-            # fake_label = torch.zeros_like(f_vi)
+            
 
-            dis_loss2 = L1_loss(vgg_out, vgg_vi)
-
-            dis_loss_value2 = 0
-            dis_loss_temp2 = dis_loss2
-            dis_loss_value2 += dis_loss_temp2
-
-            dis_loss_value2 /= len(outputs)
-
-            dis_loss_value2.backward()
-            optimizer_D2.step()
-# ----------------------------------------------------------------------------------------------------------------
-            vgg_out = dis1(outputs.detach())[2]
-            vgg_ir = dis1(img_ir)[2]
-            # outputs = F.upsample_bilinear(vgg_out[2], size=256)
-            # img_ir = F.upsample_bilinear(vgg_ir[2], size=256)
-            # outputs = outputs[:, :, :224, :224]
-            # img_ir = img_ir[:, :, :224, :224]
-            # f_ir = dis1(outputs.detach()).squeeze(-1)
-            # # dis_ir = dis_model(img_ir)
-            # r_ir = dis1(img_ir).squeeze(-1)
-            # real_label = torch.ones_like(r_ir)
-            # fake_label = torch.zeros_like(f_ir)
-
-            dis_loss1 = L1_loss(vgg_out, vgg_ir)
+            dis_loss1 = L1_loss(vgg_out, vgg_vi)
 
             dis_loss_value1 = 0
             dis_loss_temp1 = dis_loss1
@@ -257,6 +197,19 @@ def train(i, original_imgs_path):
 
             dis_loss_value1.backward()
             optimizer_D1.step()
+# ----------------------------------------------------------------------------------------------------------------
+            vgg_out = dis2(outputs.detach())[2]
+            vgg_ir = dis2(img_ir)[2]
+            dis_loss2 = L1_loss(vgg_out, vgg_ir)
+
+            dis_loss_value2 = 0
+            dis_loss_temp2 = dis_loss1
+            dis_loss_value2 += dis_loss_temp2
+
+            dis_loss_value2 /= len(outputs)
+
+            dis_loss_value2.backward()
+            optimizer_D2.step()
 
             # all_con_loss += con_loss_value.item()
             all_ssim_loss += ssim_loss_value.item()
@@ -299,70 +252,10 @@ def train(i, original_imgs_path):
                 save_model_filename = "Epoch_" + str(e) + "_iters_" + str(count) + ".model"
                 save_model_path = os.path.join(args.save_model_dir, save_model_filename)
                 torch.save(gen.state_dict(), save_model_path)
-                # save loss data
-
-            #     # con loss
-            #     loss_data_con = np.array(Loss_con)
-            #     loss_filename_path = "loss_con_epoch_" + str(
-            #         args.epochs) + "_iters_" + str(count) + ".mat"
-            #     save_loss_path = os.path.join(args.save_loss_dir, loss_filename_path)
-            #     scio.savemat(save_loss_path, {'loss_con': loss_data_con})
-            #     # ssim loss
-            #     loss_data_ssim = np.array(Loss_ssim)
-            #     loss_filename_path = "loss_ssim_epoch_" + str(
-            #         args.epochs) + "_iters_" + str(count) + ".mat"
-            #     save_loss_path = os.path.join(args.save_loss_dir, loss_filename_path)
-            #     scio.savemat(save_loss_path, {'loss_ssim': loss_data_ssim})
-            #     # all loss
-            #     loss_data_total = np.array(Loss_all)
-            #     loss_filename_path = "loss_total_epoch_" + str(
-            #         args.epochs) + "_iters_" + str(count) + ".mat"
-            #     save_loss_path = os.path.join(args.save_loss_dir, loss_filename_path)
-            #     scio.savemat(save_loss_path, {'loss_total': loss_data_total})
-            #
                 gen.train()
                 gen.cuda()
                 tbar.set_description("\nCheckpoint, trained model saved at", save_model_path)
-            # #if batch % 1000==0:
-                # InstanceNorm2d = nn.InstanceNorm2d(3)
-                # output features
-                #unloader = transforms.ToPILImage()
-                # print(x.shape)
-                #for i in range(args.batch_size):
-                    #x_t = outputs[i:i+1, :, :, :].cpu().clone()
-                    # in_img = img[i:i+1, :, :, :].cpu().clone()
-                    # print(x_t.shape)
-                    # x_t = InstanceNorm2d(x_t)
-                    #x_t = x_t.squeeze(0)
-                    # in_img = in_img.squeeze(0)
-                    # print(x_t.shape)
-                    #features = unloader(x_t)
-                    # in_img = unloader(in_img)
-                    # print(features.shape)
-                    #features.save(os.path.join('process/'+str(e)+'_'+ str(i + 1) + '.bmp'))
-                    # in_img.save(os.path.join('process/' +'img'+ '_' + str(i + 1) + '.bmp'))
-                    # print('process save!')
-
-
-    # # con loss
-    # loss_data_con = np.array(Loss_con)
-    # loss_filename_path = "Final_loss_con_epoch_" + str(
-    #     args.epochs) + ".mat"
-    # save_loss_path = os.path.join(args.save_loss_dir, loss_filename_path)
-    # scio.savemat(save_loss_path, {'loss_con': loss_data_con})
-    # # ssim loss
-    # loss_data_ssim = np.array(Loss_ssim)
-    # loss_filename_path = "Final_loss_ssim_epoch_" + str(
-    #     args.epochs) + ".mat"
-    # save_loss_path = os.path.join(args.save_loss_dir, loss_filename_path)
-    # scio.savemat(save_loss_path, {'loss_ssim': loss_data_ssim})
-    # # all loss
-    # loss_data_total = np.array(Loss_all)
-    # loss_filename_path = "Final_loss_total_epoch_" + str(
-    #     args.epochs) + ".mat"
-    # save_loss_path = os.path.join(args.save_loss_dir, loss_filename_path)
-    # scio.savemat(save_loss_path, {'loss_total': loss_data_total})
-    # save model
+            
     gen.eval()
     gen.cpu()
     save_model_filename = "Final_epoch_" + str(args.epochs) + ".model"
