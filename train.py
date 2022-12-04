@@ -203,7 +203,7 @@ def train(i, original_imgs_path):
             dis_loss2 = L1_loss(vgg_out, vgg_ir)
 
             dis_loss_value2 = 0
-            dis_loss_temp2 = dis_loss1
+            dis_loss_temp2 = dis_loss2
             dis_loss_value2 += dis_loss_temp2
 
             dis_loss_value2 /= len(outputs)
