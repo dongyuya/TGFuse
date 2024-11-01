@@ -124,8 +124,10 @@ def train(i, original_imgs_path):
         for batch in range(batches):
 
             image_paths = image_set[batch * batch_size:(batch * batch_size + batch_size)]
-            directory1 = "/data/Disk_B/KAIST-RGBIR/visible"
-            directory2 = "/data/Disk_B/KAIST-RGBIR/lwir"
+            # directory1 = "/data/Disk_B/KAIST-RGBIR/visible"
+            # directory2 = "/data/Disk_B/KAIST-RGBIR/lwir"
+            directory1 = "D:\\file\paper\dataset\dataset\\train\\vi"
+            directory2 = "D:\\file\paper\dataset\dataset\\train\ir"
             paths1 = []
             paths2 = []
             for path in image_paths:
@@ -183,7 +185,7 @@ def train(i, original_imgs_path):
             # scheduler.step()
 
 #-------------------------------------------------------------------------------------------------------------------
-            vgg_out = dis1(outputs.detach())[0]
+            vgg_out = dis1(gen(img_vi, img_ir))[0]
             vgg_vi = dis1(img_vi)[0]
             
 
@@ -198,7 +200,7 @@ def train(i, original_imgs_path):
             dis_loss_value1.backward()
             optimizer_D1.step()
 # ----------------------------------------------------------------------------------------------------------------
-            vgg_out = dis2(outputs.detach())[2]
+            vgg_out = dis2(gen(img_vi, img_ir))[2]
             vgg_ir = dis2(img_ir)[2]
             dis_loss2 = L1_loss(vgg_out, vgg_ir)
 

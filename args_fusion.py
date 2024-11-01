@@ -6,13 +6,13 @@ class args():
 	epochs = 50#"number of training epochs, default is 2"
 	batch_size = 16 #"batch size for training, default is 4"E:\database\KAIST-database
 	# dataset = "/data/Disk_B/MSCOCO2014/train2014"
-	dataset2 = "/data/Disk_B/KAIST-RGBIR/lwir"
+	dataset2 = "D:\\file\paper\dataset\dataset\\train\ir"
 	train_num = 40000
 
 	HEIGHT = 256
 	WIDTH = 256
-	save_model_dir = "models" #"path to folder where trained model will be saved."
-	save_loss_dir = "models/loss"  # "path to folder where trained model will be saved."
+	save_model_dir = "D:\\file\paper\\new1\\fusion\models" #"path to folder where trained model will be saved."
+	save_loss_dir = "D:\\file\paper\\new1\\fusion\models/loss"  # "path to folder where trained model will be saved."
 
 	image_size = 256 #"size of training images, default is 256 X 256"
 	cuda = 1 #"set it to 1 for running on GPU, 0 for CPU"
